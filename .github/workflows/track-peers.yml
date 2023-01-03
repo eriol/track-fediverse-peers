@@ -1,0 +1,31 @@
+---
+name: Track peers
+
+# Run this:
+on:
+  # 1. on each push
+  push:
+  # 2. every 3 hours
+  schedule:
+    - cron: "0 */3 * * *"
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+      - name: Fetch latest data
+        run: |-
+          mkdir -p instances/akko.mornie.org
+          mkdir -p instances/md.mornie.org
+          curl https://akko.mornie.org/api/v1/instance/peers | jq . > instances/akko.mornie.org/peers.json
+          curl https://md.mornie.org/api/v1/instance/peers | jq . > instances/md.mornie.org/peers.json
+      - name: Commit and push on changes
+        run: |-
+          git config user.name "Auto commit"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          timestamp=$(date -u)
+          git commit -m "Updated: ${timestamp}" || exit 0
+          git push
